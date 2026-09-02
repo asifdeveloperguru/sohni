@@ -20,6 +20,10 @@ echo "✓ Ensuring SESSION_ENCRYPT is disabled..."
 sed -i 's/SESSION_ENCRYPT=.*/SESSION_ENCRYPT=false/' .env
 sed -i 's/APP_DEBUG=.*/APP_DEBUG=true/' .env
 
+# Remove any invalid APP_KEY (this is the key fix!)
+echo "✓ Clearing any invalid APP_KEY..."
+sed -i '/^APP_KEY=/d' .env
+
 # Ensure database directory exists
 mkdir -p database storage bootstrap/cache logs
 chmod -R 777 database storage bootstrap/cache logs
@@ -47,13 +51,17 @@ else
     echo "✓ Vendor directory already exists, skipping composer install"
 fi
 
-# Generate APP_KEY (force regenerate)
+# Generate APP_KEY (fresh start)
 echo "✓ Generating APP_KEY..."
-php artisan key:generate --force --no-interaction 2>&1
+php artisan key:generate --no-interaction 2>&1
 
-# Verify APP_KEY was set
-if ! grep -q "APP_KEY=base64:" .env; then
-    echo "⚠ Warning: APP_KEY may not be set correctly"
+# Verify APP_KEY was set correctly
+if grep -q "APP_KEY=base64:" .env; then
+    echo "✓ APP_KEY generated successfully"
+else
+    echo "❌ ERROR: APP_KEY was not generated correctly!"
+    cat .env | grep APP_KEY
+    exit 1
 fi
 
 # Run migrations
