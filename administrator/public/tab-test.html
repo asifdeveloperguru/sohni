@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tab Test</title>
+<style>
+.tabs { display: flex; gap: 12px; border-bottom: 1px solid #ccc; margin-bottom: 20px; }
+.tab { padding: 12px 16px; border: none; background: transparent; cursor: pointer; border-bottom: 3px solid transparent; }
+.tab.active { border-bottom-color: blue; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <button class="tab active" data-tab="profile">Profile</button>
+    <button class="tab" data-tab="security">Security</button>
+    <button class="tab" data-tab="sessions">Sessions</button>
+</div>
+
+<div id="profile-tab" class="tab-content active">Profile content</div>
+<div id="security-tab" class="tab-content">Security content</div>
+<div id="sessions-tab" class="tab-content">Sessions content</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+        
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        
+        // Show selected tab content
+        const tabContent = document.getElementById(tabName + '-tab');
+        if (tabContent) {
+            tabContent.classList.add('active');
+            this.classList.add('active');
+        }
+        
+        console.log('Switched to tab:', tabName);
+    });
+});
+</script>
+
+</body>
+</html>

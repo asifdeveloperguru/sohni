@@ -1,0 +1,3 @@
+# Block every direct request to config; only public/ is servable.
+Order deny,allow
+Deny from all
