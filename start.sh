@@ -16,8 +16,8 @@ else
 fi
 
 # Ensure database directory exists
-mkdir -p database storage bootstrap/cache
-chmod -R 777 database storage bootstrap/cache
+mkdir -p database storage bootstrap/cache logs
+chmod -R 777 database storage bootstrap/cache logs
 
 # Create SQLite database if it doesn't exist
 if [ ! -f database/database.sqlite ]; then
@@ -55,19 +55,29 @@ php artisan migrate --force --no-interaction 2>&1 || echo "⚠ Migrations comple
 # Clear cache
 echo "✓ Clearing cache..."
 php artisan cache:clear 2>&1 || true
-php artisan config:cache 2>&1 || true
+php artisan config:clear 2>&1 || true
+php artisan route:cache 2>&1 || true
 
 echo "=========================================="
 echo "✓ Application Setup Complete!"
 echo "=========================================="
 echo "Starting PHP server on 0.0.0.0:8080..."
-echo "Note: Errors will appear below"
 echo "=========================================="
 
-# Show the tail of storage/logs/laravel.log in real time
-if [ -f storage/logs/laravel.log ]; then
-    tail -f storage/logs/laravel.log &
+# Monitor the log file and output to console
+if [ ! -f storage/logs/laravel.log ]; then
+    touch storage/logs/laravel.log
+    chmod 666 storage/logs/laravel.log
 fi
 
-# Start PHP server with error output
-php -S 0.0.0.0:8080 -t public/ 2>&1
+# Start tailing the log file in background
+tail -f storage/logs/laravel.log 2>/dev/null &
+TAIL_PID=$!
+
+# Start PHP server - errors will be logged to storage/logs/laravel.log
+export APP_DEBUG=true
+php -S 0.0.0.0:8080 -t public/ 2>&1 &
+PHP_PID=$!
+
+# Wait for PHP to finish (or interrupt)
+wait $PHP_PID
