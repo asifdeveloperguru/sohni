@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# Install system dependencies
+# Install system dependencies including oniguruma for mbstring
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     libzip-dev \
+    libonig-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
