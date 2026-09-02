@@ -47,6 +47,13 @@ EOF
 echo "✓ Configuring .env file..."
 php /tmp/fix_env.php
 
+echo "✓ Ensuring APP_KEY entry exists in .env..."
+if grep -Eq "^[[:space:]]*APP_KEY=" .env; then
+    sed -i "s|^[[:space:]]*APP_KEY=.*|APP_KEY=|g" .env
+else
+    printf "\nAPP_KEY=\n" >> .env
+fi
+
 echo "✓ Ensuring .env file permissions..."
 chmod u+rw .env 2>/dev/null || true
 if [ ! -r .env ] || [ ! -w .env ]; then
@@ -87,6 +94,8 @@ fi
 
 # Generate APP_KEY - FORCE it to overwrite
 echo "✓ Generating APP_KEY..."
+echo "  APP_KEY placeholder before generation:"
+grep -n "^APP_KEY=" .env || echo "  No APP_KEY line found"
 set +e
 KEYGEN_OUTPUT=$(php artisan key:generate --force --no-interaction 2>&1)
 KEYGEN_STATUS=$?
