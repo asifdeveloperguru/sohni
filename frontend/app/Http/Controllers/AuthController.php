@@ -35,7 +35,12 @@ class AuthController extends Controller
             'verification_token' => Str::random(48),
         ]);
 
-        $this->sendVerificationMail($user);
+        try {
+            $this->sendVerificationMail($user);
+        } catch (\Exception $e) {
+            \Log::error('Email send failed during signup: ' . $e->getMessage());
+            // Don't fail signup even if email fails
+        }
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -197,7 +202,12 @@ class AuthController extends Controller
         // New single-use token per resend — old links stop working
         $user->forceFill(['verification_token' => Str::random(48)])->save();
 
-        $this->sendVerificationMail($user);
+        try {
+            $this->sendVerificationMail($user);
+        } catch (\Exception $e) {
+            \Log::error('Email send failed during resend: ' . $e->getMessage());
+            // Don't fail resend even if email fails - user can try again
+        }
 
         return response()->json([
             'success' => true,
