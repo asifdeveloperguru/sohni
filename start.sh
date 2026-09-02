@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-cd frontend
+cd /app/frontend
+
+echo "Environment setup starting..."
 
 # Copy .env if it doesn't exist
 if [ ! -f .env ]; then
