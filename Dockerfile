@@ -20,11 +20,15 @@ WORKDIR /app
 # Copy application files
 COPY . .
 
-# Install dependencies without scripts to avoid errors
+# Install dependencies in frontend folder
+WORKDIR /app/frontend
 RUN composer install --no-dev --optimize-autoloader --no-scripts || true
 
 # Create database directory if it doesn't exist
 RUN mkdir -p database && chmod -R 777 database
+
+# Go back to app root
+WORKDIR /app
 
 # Expose port
 EXPOSE 8080
