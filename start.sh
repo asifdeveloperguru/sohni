@@ -42,6 +42,11 @@ EOF
 echo "✓ Configuring .env file..."
 php /tmp/fix_env.php
 
+# CRITICAL: Unset APP_KEY from environment
+echo "✓ Clearing APP_KEY from environment..."
+unset APP_KEY
+unset app_key
+
 # Ensure database directory exists
 mkdir -p database storage bootstrap/cache logs
 chmod -R 777 database storage bootstrap/cache logs
@@ -67,20 +72,22 @@ else
     echo "✓ Vendor directory already exists"
 fi
 
-# Generate APP_KEY - now in local environment
+# Generate APP_KEY - FORCE it to overwrite
 echo "✓ Generating APP_KEY..."
 php artisan key:generate --force --no-interaction 2>&1
 
-# Verify APP_KEY was set
+# Verify APP_KEY was set in .env file
 if grep -q "^APP_KEY=base64:" .env; then
-    KEY=$(grep "^APP_KEY=" .env)
-    echo "✓ APP_KEY generated successfully!"
-    echo "  $KEY" | head -c 80
-    echo "..."
+    KEY=$(grep "^APP_KEY=" .env | head -c 80)
+    echo "✅ APP_KEY generated successfully!"
+    echo "  $KEY..."
 else
-    echo "❌ ERROR: APP_KEY was not generated!"
-    echo "Current .env APP_KEY line:"
-    grep "^APP_KEY=" .env || echo "No APP_KEY found"
+    echo "❌ ERROR: APP_KEY was not written to .env file!"
+    echo "Checking .env file for APP_KEY:"
+    grep "^APP_KEY" .env || echo "No APP_KEY line found in .env"
+    echo ""
+    echo "Tail of .env file:"
+    tail -5 .env
     exit 1
 fi
 
@@ -96,7 +103,7 @@ php artisan route:clear 2>&1 || true
 php artisan view:clear 2>&1 || true
 
 echo "=========================================="
-echo "✓ Application Setup Complete!"
+echo "✅ Application Setup Complete!"
 echo "=========================================="
 echo "Starting PHP server on 0.0.0.0:8080..."
 echo "=========================================="
