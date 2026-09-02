@@ -30,15 +30,14 @@ WORKDIR /app
 # Copy entire application
 COPY . .
 
-# Install dependencies in frontend - allow failures and continue
+# Install PHP dependencies in frontend directory
 WORKDIR /app/frontend
-RUN composer install --no-dev --no-interaction --prefer-dist --no-autoloader 2>&1 || true
-RUN composer dump-autoload --no-dev --optimize 2>&1 || true
+RUN composer install --no-dev --no-interaction --prefer-dist
 
-# Go back to root
+# Return to app root
 WORKDIR /app
 
-# Make start.sh executable  
+# Make start.sh executable
 RUN chmod +x start.sh
 
 # Expose port
