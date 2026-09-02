@@ -30,6 +30,9 @@ WORKDIR /app
 # Copy entire application
 COPY . .
 
+# Install PHP dependencies
+RUN cd frontend && composer install --no-dev --optimize-autoloader
+
 # Make start.sh executable
 RUN chmod +x start.sh
 
