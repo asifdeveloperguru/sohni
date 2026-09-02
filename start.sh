@@ -30,7 +30,7 @@ fi
 echo "✓ Installing Composer dependencies..."
 if [ ! -d vendor ]; then
     echo "  Running: composer install --no-dev --optimize-autoloader"
-    composer install --no-dev --optimize-autoloader -vvv 2>&1
+    composer install --no-dev --optimize-autoloader 2>&1
     
     # Check if vendor was created
     if [ ! -d vendor ]; then
@@ -52,8 +52,22 @@ fi
 echo "✓ Running database migrations..."
 php artisan migrate --force --no-interaction 2>&1 || echo "⚠ Migrations completed (may have already run)"
 
+# Clear cache
+echo "✓ Clearing cache..."
+php artisan cache:clear 2>&1 || true
+php artisan config:cache 2>&1 || true
+
 echo "=========================================="
 echo "✓ Application Setup Complete!"
 echo "=========================================="
 echo "Starting PHP server on 0.0.0.0:8080..."
-php -S 0.0.0.0:8080 -t public/
+echo "Note: Errors will appear below"
+echo "=========================================="
+
+# Show the tail of storage/logs/laravel.log in real time
+if [ -f storage/logs/laravel.log ]; then
+    tail -f storage/logs/laravel.log &
+fi
+
+# Start PHP server with error output
+php -S 0.0.0.0:8080 -t public/ 2>&1
