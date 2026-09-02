@@ -13,15 +13,34 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-# Set environment to local for setup (will be changed to production later if needed)
-echo "✓ Setting environment for setup..."
-sed -i 's/APP_ENV=.*/APP_ENV=local/' .env
-sed -i 's/SESSION_ENCRYPT=.*/SESSION_ENCRYPT=false/' .env
-sed -i 's/APP_DEBUG=.*/APP_DEBUG=true/' .env
+# Create a PHP script to properly modify .env file
+cat > /tmp/fix_env.php << 'EOF'
+<?php
+$envFile = '.env';
+$lines = file($envFile, FILE_IGNORE_NEW_LINES);
+$output = [];
 
-# Remove any invalid APP_KEY
-echo "✓ Clearing any invalid APP_KEY..."
-sed -i '/^APP_KEY=/d' .env
+foreach ($lines as $line) {
+    if (strpos($line, 'APP_ENV=') === 0) {
+        $output[] = 'APP_ENV=local';
+    } elseif (strpos($line, 'SESSION_ENCRYPT=') === 0) {
+        $output[] = 'SESSION_ENCRYPT=false';
+    } elseif (strpos($line, 'APP_DEBUG=') === 0) {
+        $output[] = 'APP_DEBUG=true';
+    } elseif (strpos($line, 'APP_KEY=') === 0) {
+        // Skip - will be regenerated
+        continue;
+    } else {
+        $output[] = $line;
+    }
+}
+
+file_put_contents($envFile, implode("\n", $output) . "\n");
+echo "✓ .env file configured\n";
+EOF
+
+echo "✓ Configuring .env file..."
+php /tmp/fix_env.php
 
 # Ensure database directory exists
 mkdir -p database storage bootstrap/cache logs
@@ -34,11 +53,11 @@ if [ ! -f database/database.sqlite ]; then
     chmod 666 database/database.sqlite
 fi
 
-# Install composer dependencies FIRST (before artisan commands)
+# Install composer dependencies
 echo "✓ Installing Composer dependencies..."
 if [ ! -d vendor ]; then
     echo "  Running: composer install --no-dev --optimize-autoloader"
-    composer install --no-dev --optimize-autoloader 2>&1
+    composer install --no-dev --optimize-autoloader 2>&1 | tail -20
     
     if [ ! -d vendor ]; then
         echo "❌ ERROR: Composer install failed!"
@@ -48,16 +67,20 @@ else
     echo "✓ Vendor directory already exists"
 fi
 
-# Generate APP_KEY
+# Generate APP_KEY - now in local environment
 echo "✓ Generating APP_KEY..."
-php artisan key:generate --no-interaction 2>&1
+php artisan key:generate --force --no-interaction 2>&1
 
 # Verify APP_KEY was set
-if grep -q "APP_KEY=base64:" .env; then
-    echo "✓ APP_KEY generated successfully: $(grep APP_KEY .env | cut -d= -f1-2 | head -c 50)..."
+if grep -q "^APP_KEY=base64:" .env; then
+    KEY=$(grep "^APP_KEY=" .env)
+    echo "✓ APP_KEY generated successfully!"
+    echo "  $KEY" | head -c 80
+    echo "..."
 else
     echo "❌ ERROR: APP_KEY was not generated!"
-    grep APP_KEY .env || echo "No APP_KEY found in .env"
+    echo "Current .env APP_KEY line:"
+    grep "^APP_KEY=" .env || echo "No APP_KEY found"
     exit 1
 fi
 
@@ -89,8 +112,4 @@ tail -f storage/logs/laravel.log 2>/dev/null &
 TAIL_PID=$!
 
 # Start PHP server
-php -S 0.0.0.0:8080 -t public/ 2>&1 &
-PHP_PID=$!
-
-# Wait for PHP
-wait $PHP_PID
+php -S 0.0.0.0:8080 -t public/
