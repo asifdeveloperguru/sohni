@@ -19,6 +19,7 @@ cat > /tmp/fix_env.php << 'EOF'
 $envFile = '.env';
 $lines = file($envFile, FILE_IGNORE_NEW_LINES);
 $output = [];
+$hasAppKey = false;
 
 foreach ($lines as $line) {
     if (strpos($line, 'APP_ENV=') === 0) {
@@ -28,11 +29,15 @@ foreach ($lines as $line) {
     } elseif (strpos($line, 'APP_DEBUG=') === 0) {
         $output[] = 'APP_DEBUG=true';
     } elseif (strpos($line, 'APP_KEY=') === 0) {
-        // Skip - will be regenerated
-        continue;
+        $output[] = 'APP_KEY=';
+        $hasAppKey = true;
     } else {
         $output[] = $line;
     }
+}
+
+if (!$hasAppKey) {
+    $output[] = 'APP_KEY=';
 }
 
 file_put_contents($envFile, implode("\n", $output) . "\n");
@@ -41,6 +46,21 @@ EOF
 
 echo "✓ Configuring .env file..."
 php /tmp/fix_env.php
+
+echo "✓ Ensuring APP_KEY entry exists in .env..."
+if grep -Eq "^[[:space:]]*APP_KEY=" .env; then
+    sed -i "s|^[[:space:]]*APP_KEY=.*|APP_KEY=|g" .env
+else
+    printf "\nAPP_KEY=\n" >> .env
+fi
+
+echo "✓ Ensuring .env file permissions..."
+chmod u+rw .env 2>/dev/null || true
+if [ ! -r .env ] || [ ! -w .env ]; then
+    echo "❌ ERROR: .env must be readable and writable."
+    ls -l .env
+    exit 1
+fi
 
 # CRITICAL: Unset APP_KEY from environment
 echo "✓ Clearing APP_KEY from environment..."
@@ -74,7 +94,43 @@ fi
 
 # Generate APP_KEY - FORCE it to overwrite
 echo "✓ Generating APP_KEY..."
-php artisan key:generate --force --no-interaction 2>&1
+echo "  APP_KEY placeholder before generation:"
+grep -n "^APP_KEY=" .env || echo "  No APP_KEY line found"
+set +e
+KEYGEN_OUTPUT=$(php artisan key:generate --force --no-interaction 2>&1)
+KEYGEN_STATUS=$?
+set -e
+
+if [ $KEYGEN_STATUS -ne 0 ]; then
+    echo "⚠️  key:generate failed with exit code $KEYGEN_STATUS"
+    echo "$KEYGEN_OUTPUT"
+fi
+
+if ! grep -q "^APP_KEY=base64:" .env; then
+    echo "⚠️  APP_KEY was not written by key:generate, attempting fallback..."
+    set +e
+    GENERATED_KEY=$(php artisan key:generate --show --no-interaction 2>&1)
+    SHOW_STATUS=$?
+    set -e
+
+    if [ $SHOW_STATUS -ne 0 ]; then
+        echo "❌ ERROR: Unable to generate fallback APP_KEY."
+        echo "$GENERATED_KEY"
+        exit 1
+    fi
+
+    if [[ "$GENERATED_KEY" != base64:* ]]; then
+        echo "❌ ERROR: Generated fallback APP_KEY is invalid."
+        echo "Output: $GENERATED_KEY"
+        exit 1
+    fi
+
+    if grep -q "^APP_KEY=" .env; then
+        sed -i "s|^APP_KEY=.*|APP_KEY=$GENERATED_KEY|" .env
+    else
+        echo "APP_KEY=$GENERATED_KEY" >> .env
+    fi
+fi
 
 # Verify APP_KEY was set in .env file
 if grep -q "^APP_KEY=base64:" .env; then
