@@ -19,6 +19,7 @@ cat > /tmp/fix_env.php << 'EOF'
 $envFile = '.env';
 $lines = file($envFile, FILE_IGNORE_NEW_LINES);
 $output = [];
+$hasAppKey = false;
 
 foreach ($lines as $line) {
     if (strpos($line, 'APP_ENV=') === 0) {
@@ -28,11 +29,16 @@ foreach ($lines as $line) {
     } elseif (strpos($line, 'APP_DEBUG=') === 0) {
         $output[] = 'APP_DEBUG=true';
     } elseif (strpos($line, 'APP_KEY=') === 0) {
-        // Skip - will be regenerated
-        continue;
+        $hasAppKey = true;
+        $output[] = 'APP_KEY='; // Empty key - artisan will fill it
     } else {
         $output[] = $line;
     }
+}
+
+// If APP_KEY doesn't exist, add it
+if (!$hasAppKey) {
+    $output[] = 'APP_KEY='; // Empty key - artisan will fill it
 }
 
 file_put_contents($envFile, implode("\n", $output) . "\n");
@@ -72,7 +78,7 @@ else
     echo "✓ Vendor directory already exists"
 fi
 
-# Generate APP_KEY
+# Generate APP_KEY - now APP_KEY exists as empty, artisan will fill it
 echo "✓ Generating APP_KEY..."
 php artisan key:generate --force --no-interaction 2>&1
 
@@ -82,7 +88,9 @@ if grep -q "^APP_KEY=base64:" .env; then
     echo "✅ APP_KEY generated successfully!"
     echo "  $KEY..."
 else
-    echo "❌ ERROR: APP_KEY was not written to .env file!"
+    echo "❌ ERROR: APP_KEY was not generated!"
+    echo "Current APP_KEY line:"
+    grep "^APP_KEY" .env || echo "No APP_KEY line found"
     exit 1
 fi
 
