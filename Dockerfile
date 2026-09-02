@@ -1,6 +1,6 @@
-FROM php:8.2-fpm
+FROM php:8.2-cli
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -17,17 +17,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy application files
+# Copy entire application
 COPY . .
 
-# Install dependencies in frontend folder
+# Change to frontend and install dependencies
 WORKDIR /app/frontend
-RUN composer install --no-dev --optimize-autoloader --no-scripts || true
 
-# Create database directory if it doesn't exist
-RUN mkdir -p database && chmod -R 777 database
+# Install PHP dependencies with retry logic
+RUN composer install --no-dev --optimize-autoloader 2>&1 || \
+    (echo "First attempt failed, retrying..." && sleep 5 && composer install --no-dev --optimize-autoloader)
 
-# Go back to app root
+# Create database directory with permissions
+RUN mkdir -p database && chmod -R 777 database storage
+
+# Go back to root
 WORKDIR /app
 
 # Expose port
