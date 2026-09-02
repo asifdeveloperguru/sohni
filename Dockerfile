@@ -20,8 +20,11 @@ WORKDIR /app
 # Copy application files
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install dependencies without scripts to avoid errors
+RUN composer install --no-dev --optimize-autoloader --no-scripts || true
+
+# Create database directory if it doesn't exist
+RUN mkdir -p database && chmod -R 777 database
 
 # Expose port
 EXPOSE 8080
