@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     libzip-dev \
     libonig-dev \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -30,13 +31,6 @@ WORKDIR /app
 
 # Copy entire application
 COPY . .
-
-# Install PHP dependencies in frontend directory
-WORKDIR /app/frontend
-RUN composer install --no-dev --no-interaction --prefer-dist
-
-# Return to app root
-WORKDIR /app
 
 # Make start.sh executable
 RUN chmod +x start.sh
