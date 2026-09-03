@@ -28,28 +28,13 @@ echo "📂 Laravel directory: $LARAVEL_DIR"
 
 # Create required Laravel directories FIRST
 echo "📁 Creating required directories..."
-mkdir -p storage/logs
-mkdir -p storage/framework/cache
-mkdir -p storage/framework/sessions
-mkdir -p storage/framework/views
-mkdir -p bootstrap/cache
-mkdir -p database
-
-# Create SQLite database file if it doesn't exist
-echo "🗄️  Creating SQLite database file..."
-if [ ! -f "database/database.sqlite" ]; then
-    touch database/database.sqlite
-    chmod 666 database/database.sqlite
-    echo "✅ Database file created: database/database.sqlite"
-else
-    echo "✅ Database file already exists"
-fi
+php scripts/prepare-sqlite-deployment.php
 
 # Fix permissions
 echo "🔐 Setting file permissions..."
-chmod -R 775 storage bootstrap/cache database || true
+chmod -R 775 storage bootstrap/cache || true
 chmod -R 755 public || true
-chmod 666 database/database.sqlite || true
+chmod 664 storage/database/database.sqlite || true
 
 # Install composer dependencies
 if [ -f "composer.json" ]; then
@@ -96,6 +81,6 @@ sed -i 's/APP_DEBUG=.*/APP_DEBUG=false/' .env 2>/dev/null || true
 echo "=========================================="
 echo "✅ Laravel Cloud Setup Complete!"
 echo "=========================================="
-echo "Database file: $(pwd)/database/database.sqlite"
+echo "Database file: $(pwd)/storage/database/database.sqlite"
 echo "Your application is ready to serve requests."
 echo "=========================================="

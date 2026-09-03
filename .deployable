@@ -12,15 +12,16 @@ directories_to_create="
   frontend/storage/framework/cache
   frontend/storage/framework/sessions
   frontend/storage/framework/views
+  frontend/storage/database
   frontend/bootstrap/cache
-  frontend/database
 "
 
 # Shell commands to run during deployment
 shell_commands="
-  mkdir -p frontend/storage/logs frontend/storage/framework/cache frontend/storage/framework/sessions frontend/storage/framework/views frontend/bootstrap/cache frontend/database
-  chmod -R 775 frontend/storage frontend/bootstrap/cache
   cd frontend
+  php scripts/prepare-sqlite-deployment.php
+  chmod -R 775 storage bootstrap/cache
+  chmod 664 storage/database/database.sqlite
   composer install --no-dev --optimize-autoloader
   php artisan migrate --force --no-interaction
   php artisan config:cache

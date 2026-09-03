@@ -48,21 +48,18 @@ EOF
 echo "✓ Configuring .env file..."
 php /tmp/fix_env.php
 
+echo "✓ Preparing SQLite database and directories..."
+php scripts/prepare-sqlite-deployment.php
+
 # CRITICAL: Unset APP_KEY from environment
 echo "✓ Clearing APP_KEY from environment..."
 unset APP_KEY
 unset app_key
 
-# Ensure database directory exists
-mkdir -p database storage bootstrap/cache logs
-chmod -R 777 database storage bootstrap/cache logs
-
-# Create SQLite database if it doesn't exist
-if [ ! -f database/database.sqlite ]; then
-    echo "✓ Creating SQLite database..."
-    touch database/database.sqlite
-    chmod 666 database/database.sqlite
-fi
+# Ensure required directories remain writable
+mkdir -p logs
+chmod -R 775 storage bootstrap/cache logs
+chmod 664 storage/database/database.sqlite
 
 # Install composer dependencies
 echo "✓ Installing Composer dependencies..."
