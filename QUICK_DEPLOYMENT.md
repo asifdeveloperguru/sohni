@@ -69,9 +69,7 @@ After deployment, your app will be at:
 ```
 Main Website:    https://sohni-xxxxx.railway.app
 Admin Login:     https://sohni-xxxxx.railway.app/administrator/public/login.php
-
-Admin Email:     superadmin@sohni.local
-Admin Password:  ab40e6442f64234ce7 (change on first login)
+Create Admin:    php administrator/bin/create-admin.php "Your Name" admin@example.com
 ```
 
 ---

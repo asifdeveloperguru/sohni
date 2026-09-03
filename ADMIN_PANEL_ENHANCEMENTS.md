@@ -287,9 +287,8 @@ Navigate to `/users-v2.php` to:
 - Pagination handles large datasets
 - Export CSV downloads correctly
 
-**Admin Credentials (created via CLI):**
-- Email: superadmin@sohni.local
-- Password: f6fc8bdb8c1c2b9bb9
-- Role: super_admin
+**Admin Provisioning (created via CLI):**
+- Command: `php administrator/bin/create-admin.php "Your Name" admin@example.com`
+- Role: `super_admin`
 
 ---

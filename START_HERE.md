@@ -80,9 +80,7 @@ After deployment, access at:
 ```
 Main App:        https://sohni-xxxxx.railway.app
 Admin Panel:     https://sohni-xxxxx.railway.app/administrator/public/login.php
-
-Admin Email:     superadmin@sohni.local
-Admin Password:  ab40e6442f64234ce7 (change after first login!)
+Create Admin:    php administrator/bin/create-admin.php "Your Name" admin@example.com
 ```
 
 ---

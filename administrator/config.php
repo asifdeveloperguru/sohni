@@ -34,7 +34,7 @@ return [
     'totp_window' => 1, // accept 1 step (±30s) of clock drift
 
     // Storage paths this app is allowed to read from the main app.
-    'chat_uploads_path' => realpath(__DIR__ . '/../frontend/storage/app/chat-uploads') ?: null,
+    'chat_uploads_path' => realpath(__DIR__ . '/../frontend/storage/app/private/chat-media') ?: null,
 
     // Force HTTPS-only cookies when the panel itself is served over TLS.
     'force_secure_cookie' => (($_SERVER['HTTPS'] ?? '') !== '') || (($_SERVER['SERVER_PORT'] ?? '') === '443'),

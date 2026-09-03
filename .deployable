@@ -3,28 +3,32 @@
 # Path to your app's web directory
 public_path=frontend/public
 
-# Path to the key file that Laravel Cloud creates
+# Path to the environment file Laravel Cloud writes
 env_file=frontend/.env
 
 # List of directories that need to exist and be writable
 directories_to_create="
   frontend/storage/logs
   frontend/storage/framework/cache
+  frontend/storage/framework/cache/data
   frontend/storage/framework/sessions
   frontend/storage/framework/views
+  frontend/storage/app/public
+  frontend/storage/app/private
+  frontend/storage/app/private/chat-media
+  frontend/storage/app/private/chat-uploads
   frontend/bootstrap/cache
   frontend/database
 "
 
 # Shell commands to run during deployment
 shell_commands="
-  mkdir -p frontend/storage/logs frontend/storage/framework/cache frontend/storage/framework/sessions frontend/storage/framework/views frontend/bootstrap/cache frontend/database
-  chmod -R 775 frontend/storage frontend/bootstrap/cache
   cd frontend
-  composer install --no-dev --optimize-autoloader
+  php scripts/prepare-cloud-deployment.php
+  composer install --no-dev --optimize-autoloader --no-interaction
   php artisan migrate --force --no-interaction
+  php artisan storage:link || true
+  php artisan optimize:clear
   php artisan config:cache
-  php artisan route:cache
   php artisan view:cache
-  php artisan cache:clear
 "

@@ -66,5 +66,4 @@ echo "\n   ✓ All tables exist\n";
 echo "\n✅ ALL TESTS PASSED\n";
 echo "\nAdmin Panel is ready to use!\n";
 echo "URL: http://127.0.0.1:9000/login.php\n";
-echo "Email: superadmin@sohni.local\n";
-echo "Password: ab40e6442f64234ce7\n";
+echo "Create the first admin with: php administrator/bin/create-admin.php \"Your Name\" admin@example.com\n";
